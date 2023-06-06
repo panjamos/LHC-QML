@@ -7,6 +7,7 @@ import sys
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+from sklearn.metrics import roc_curve, auc
 
 def load_data(signal_datapath, background_datapath, keys):
     #file with HToZZ in name is signal
@@ -18,6 +19,7 @@ def load_data(signal_datapath, background_datapath, keys):
     for key in keys:
         signal_dict[key] = signal_tree[key].array(library="np")
         background_dict[key] = background_tree[key].array(library="np")
+    print('data loaded')
     return signal_dict, background_dict
 
 
@@ -49,7 +51,7 @@ def format_data(signal, background, feature_keys):
     #still in order of signal events followed by background events
     features = events_and_labels[:,1:]
     labels = events_and_labels[:,0]
-    
+    print('data formatted')
     return features, labels
 
 
@@ -61,25 +63,26 @@ def preprocess_data(features, labels):
     scaled_features = scaler.fit_transform(features)
 
     #return scaler object for unscaling later if necessary
+    print('data preprocessed')
     return scaled_features, labels, scaler
 
 
 
-def save_model(fit_result, save_folder):
+def save_model(vqc, save_folder):
     #improve to also save file with vqc parameters, i.e. steps, points used, seed, split number, feature map, optimizer, ansatz, etc
     
     fit_number = 0
     fit_filepath_default = save_folder + "/fit_result"
     fit_filepath = fit_filepath_default
 
-    while os.path.exists(fit_filepath + '.npy'):
+    while os.path.exists(fit_filepath):
         fit_filepath = fit_filepath_default + str(fit_number)
         fit_number += 1
         if fit_number == 500:
             sys.exit("filepath likely incorrect") 
     
-    np.save(fit_filepath, fit_result.x)
-    print('file saved to ' + fit_filepath + '.npy')
+    vqc.save(fit_filepath)
+    print('file saved to ' + fit_filepath)
 
 
 
@@ -87,6 +90,7 @@ def score_model(vqc, train_features, test_features, train_labels, test_labels, f
     train_score_loaded = vqc.score(train_features[:500,feature_indices], train_labels[:500])
     test_score_loaded = vqc.score(test_features[:500,feature_indices], test_labels[:500])
 
+    print("Warning: only scoring on 500 pts")
     print(f"Quantum VQC on the training dataset: {train_score_loaded:.5f}")
     print(f"Quantum VQC on the test dataset:     {test_score_loaded:.5f}")
 
@@ -94,6 +98,7 @@ def score_model(vqc, train_features, test_features, train_labels, test_labels, f
 
 def plot_pairwise(compare_keys, signal, background):
     #expects data in dicts with keys being the features and value being 1d array of data for events
+    #NOTE: something might be wrong with this code, plots look different from old version
     feature_dict = {}
     for key in compare_keys:
         feature_dict[key] = np.concatenate((background[key],signal[key]))
@@ -114,3 +119,36 @@ def plot_loss(losses):
     plt.ylabel("Loss")
     plt.plot(range(1,len(losses)+1), losses)
     plt.show()
+
+def plot_discriminator(prediction, target):
+    labels = ['Background', 'Signal']
+    colors = ['b', 'r']
+    plt.figure(1) 
+    #I split up signal and background using masks instead of loops
+    #masking test values where prediction is indicated signal/background
+    signal = np.bool_(target.flat)
+
+    n, bins, patches = plt.hist(prediction[signal],50, histtype='step', color=colors[1], label=labels[1])#,density=True) 
+    n, bins, patches = plt.hist(prediction[~signal],50, histtype='step', color=colors[0], label=labels[0])#,density=True) 
+    plt.title('Discriminator')
+    plt.ylabel("Counts")
+    plt.legend()
+    plt.xlabel("Output Value")
+    plt.legend()
+    plt.show()
+
+def plot_roc(prediction, labels):
+    fpr, tpr, _ = roc_curve(labels, prediction)
+
+    auc_roc = auc(fpr, tpr)
+
+    plt.figure(2,figsize=(6,6))
+    plt.plot(tpr, 1.0-fpr, lw=3, alpha=0.8,
+            label="(AUC={:.3f})".format(auc_roc))
+    plt.xlabel("Signal efficiency")
+    plt.ylabel("Background rejection")
+    plt.legend(loc=3)
+    plt.xlim((0.0, 1.0))
+    plt.ylim((0.0, 1.0))
+    plt.show()
+    plt.close()

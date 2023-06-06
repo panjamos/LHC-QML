@@ -11,7 +11,8 @@ from qiskit.algorithms.optimizers import COBYLA, SLSQP, SPSA
 
 signal_datapath = "D:\LHC-QML\data\output_VBF_HToZZTo4L_M-125_8TeV-powheg-pythia6.root:HZZ4LeptonsAnalysisReduced"
 background_datapath = "D:\LHC-QML\data\output_GluGluToZZTo4L_8TeV-gg2zz-pythia6.root:HZZ4LeptonsAnalysisReduced"
-save_folder = "D:/LHC-QML/fit results"
+
+load_path = "D:/LHC-QML/models/fit_result"
 
 choice_feature_keys = [
  'f_lept1_pt', 'f_lept1_eta', 'f_lept1_phi', 'f_lept1_pfx', 'f_lept2_pt',
@@ -26,7 +27,7 @@ seed = 123
 n_training_points = 500
 #decides if callback makes a graph at each step
 
-training_feature_indices = [14,21,22,23] #corresponds to f_Z2mass, f_pt4l, f_eta4l, f_mass4l
+training_feature_indices = [15,21,22,23] #corresponds to f_Z2mass, f_pt4l, f_eta4l, f_mass4l
 #training_key_indices = range(len(choice_feature_keys))
 num_features = len(training_feature_indices)
 
@@ -48,5 +49,12 @@ train_features, test_features, train_labels, test_labels = train_test_split(
     features[:2*n_signal_events], labels[:2*n_signal_events], train_size=0.8, random_state=seed)
 
 
-compare_keys = ['f_Z1mass','f_pt4l', 'f_eta4l', 'f_mass4l']
-lqm.plot_pairwise(compare_keys, signal, background)
+#compare_keys = ['f_Z1mass','f_pt4l', 'f_eta4l', 'f_mass4l']
+#lqm.plot_pairwise(compare_keys, signal, background)
+
+vqc = VQC.load(load_path)
+lqm.score_model(vqc, train_features, test_features, train_labels, test_labels, training_feature_indices)
+
+prediction = vqc.predict(test_features[:,training_feature_indices])
+lqm.plot_discriminator(prediction, test_labels)
+lqm.plot_roc(prediction, test_labels)

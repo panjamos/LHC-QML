@@ -11,7 +11,7 @@ from qiskit.algorithms.optimizers import COBYLA, SLSQP, SPSA
 
 signal_datapath = "D:\LHC-QML\data\output_VBF_HToZZTo4L_M-125_8TeV-powheg-pythia6.root:HZZ4LeptonsAnalysisReduced"
 background_datapath = "D:\LHC-QML\data\output_GluGluToZZTo4L_8TeV-gg2zz-pythia6.root:HZZ4LeptonsAnalysisReduced"
-save_folder = "D:/LHC-QML/fit results"
+save_folder = "D:/LHC-QML/models"
 
 choice_feature_keys = [
  'f_lept1_pt', 'f_lept1_eta', 'f_lept1_phi', 'f_lept1_pfx', 'f_lept2_pt',
@@ -23,7 +23,7 @@ choice_feature_keys = [
  'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
 seed = 123
-n_training_points = 100
+n_training_points = 50
 #graph = False
 #decides if callback makes a graph at each step
 
@@ -90,9 +90,7 @@ elapsed = time.time() - start
 
 print(f"Training time: {round(elapsed)} seconds")
 
-fit_result = vqc._fit_result
-
-lqm.save_model(fit_result, save_folder)
+lqm.save_model(vqc, save_folder)
 lqm.score_model(vqc, train_features, test_features, train_labels, test_labels, training_feature_indices)
 
 lqm.plot_loss(losses)

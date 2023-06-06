@@ -10,5 +10,6 @@ dependencies:
   - uproot=5.0
   - pip:
       - numpy==1.23.5
+      - dill==0.3.6
       - qiskit==0.43
-      - qiskit-machine-learning==0.6
+      - qiskit-machine-learning==0.6.1
