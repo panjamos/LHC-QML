@@ -56,7 +56,6 @@ train_features, test_features, train_labels, test_labels = train_test_split(
     features[:2*n_signal_events], labels[:2*n_signal_events], train_size=0.8, random_state=seed)
 
 
-
 losses = []
 times = []
 

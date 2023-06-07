@@ -56,5 +56,10 @@ vqc = VQC.load(load_path)
 lqm.score_model(vqc, train_features, test_features, train_labels, test_labels, training_feature_indices)
 
 prediction = vqc.predict(test_features[:,training_feature_indices])
+prob = vqc._neural_network.forward(test_features[:,training_feature_indices],vqc._fit_result.x)
+
 lqm.plot_discriminator(prediction, test_labels)
 lqm.plot_roc(prediction, test_labels)
+
+lqm.plot_discriminator(prob[:,1], test_labels)
+lqm.plot_roc(prob[:,1], test_labels)
