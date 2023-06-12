@@ -9,44 +9,75 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.metrics import roc_curve, auc
 
-def load_data(signal_datapaths, background_datapaths, keys):
-    #file with HToZZ in name is signal
+
+def load_data(signal_path, background_path, keys, folder_paths=True):
+    #loads all root files in folders given if folder_paths == True
+    #loads all root files with paths given in signal_path list and background_path list if folder_paths == False
+    if folder_paths:
+        print("\nsignal data from:")
+        signal_filepaths = print_get_root_filepaths(signal_path)
+        print("\nbackground data from:")
+        background_filepaths = print_get_root_filepaths(background_path)
+        files_used = [signal_filepaths, background_filepaths]
+    else:
+        if not isinstance(signal_path,list):
+            signal_path = [signal_path]
+        if not isinstance(background_path,list):
+            background_path = [background_path]
+        
+        signal_filepaths = signal_path
+        background_filepaths = background_path
+
+        print("\nsignal data from:")
+        for path in signal_filepaths: print(path)
+        print("\nbackground data from:")
+        for path in background_filepaths: print(path)
+        files_used = [signal_filepaths, background_filepaths]
+
+    signal_datapaths = []
+    background_datapaths = []
+
+    for filepath in signal_filepaths:
+        signal_datapaths.append(filepath + ":HZZ4LeptonsAnalysisReduced")
+    for filepath in background_filepaths:
+        background_datapaths.append(filepath + ":HZZ4LeptonsAnalysisReduced")
+    
     signal_dict = uproot.concatenate(signal_datapaths, keys, library='np')
     background_dict = uproot.concatenate(background_datapaths, keys, library='np')
-    
-    print('data loaded')
-    return signal_dict, background_dict
+
+    print('\ndata loaded')
+    return signal_dict, background_dict, files_used
 
 
 
 def format_data(signal, background):
     #changes the format of the data to be more like the old code
+    #signal, background dicts --> feature and label arrays
     keys = list(signal.keys())
 
     number_signal_events = len(signal[keys[0]])
     number_background_events = len(background[keys[0]])
 
-    print('# of signal events: ' + str(number_signal_events))
-    print('# of background events: ' + str(number_background_events))
+    print('\n# of signal events: ' + str(number_signal_events))
+    print('# of background events: ' + str(number_background_events) + '\n')
 
-    events_and_labels = [np.append(np.ones(number_signal_events),np.zeros(number_background_events))] 
+    labels = np.append(np.ones(number_signal_events),np.zeros(number_background_events))
     #creates data array with n_signal 1s and n_background 0s
-    #will be appended with event data
 
-    #puts each feature array in the data array along the first axis
-    #all signal events followed by all background events
-    for key in keys:
-        event_data = np.concatenate((signal[key], background[key]))
-        events_and_labels = np.append(events_and_labels, [event_data], axis=0)
-    #NOTE: rewrite later --> It's uneccessary to put everything in one array just to split it back up before we return
+    features = [np.concatenate((signal[keys[0]], background[keys[0]]))]
+    #initialize feature array with first feature
+    
+    if len(keys) != 1:
+        for key in keys[1:]:
+            #put each following feature in array with the first index corresponding to feature
+            one_feature = np.concatenate((signal[key], background[key]))
+            features = np.append(features, [one_feature], axis=0)
 
-    #transpose array to match format of previous code
-    events_and_labels = np.transpose(events_and_labels)
+    #transpose array for input to vqc
+    features = np.transpose(features)
 
     #create the input and targets arrays in format for training model
     #still in order of signal events followed by background events
-    features = events_and_labels[:,1:]
-    labels = events_and_labels[:,0]
     print('data formatted')
     return features, labels
 
@@ -59,7 +90,7 @@ def preprocess_data(features, labels):
     scaled_features = scaler.fit_transform(features)
 
     #return scaler object for unscaling later if necessary
-    print('data preprocessed')
+    print('data preprocessed\n')
     return scaled_features, labels, scaler
 
 
@@ -78,7 +109,7 @@ def save_model(vqc: VQC, save_folder):
             sys.exit("filepath likely incorrect") 
     
     vqc.save(fit_filepath)
-    print('file saved to ' + fit_filepath)
+    print('\nfile saved to ' + fit_filepath)
 
 
 
@@ -148,3 +179,15 @@ def plot_roc(prediction, labels):
     plt.ylim((0.0, 1.0))
     plt.show()
     plt.close()
+
+def print_get_root_filepaths(directory_path):
+    directory = os.fsencode(directory_path)
+    filepaths = []
+
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+        if filename.endswith('.root'):
+            filepath = os.fsdecode(os.path.normpath(os.path.join(directory, file)))
+            print(filepath)
+            filepaths.append(filepath)
+    return filepaths

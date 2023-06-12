@@ -7,8 +7,12 @@ from qiskit_machine_learning.algorithms.classifiers import VQC
 from qiskit.circuit.library import RealAmplitudes, EfficientSU2
 from qiskit.algorithms.optimizers import COBYLA, SLSQP, SPSA
 
-signals_datapath = "./data/signal/*.root:HZZ4LeptonsAnalysisReduced"
-backgrounds_datapath = "./data/background/*.root:HZZ4LeptonsAnalysisReduced"
+from warnings import simplefilter
+# ignore all future warnings
+simplefilter(action='ignore', category=FutureWarning)
+
+signals_folder = "./data/signal"
+backgrounds_folder = "./data/background"
 save_folder = "./models"
 
 #choice_feature_keys = [
@@ -34,7 +38,7 @@ optimizer = COBYLA(maxiter=10)
 
 
 #loads data from files
-signal_dict, background_dict = lqm.load_data(signals_datapath, backgrounds_datapath, training_feature_keys)
+signal_dict, background_dict, files_used = lqm.load_data(signals_folder, backgrounds_folder, training_feature_keys)
 
 #formats data for input into vqc
 features, labels = lqm.format_data(signal_dict, background_dict)
@@ -75,7 +79,7 @@ times.append(start)
 vqc.fit(train_features[:n_training_points,:], train_labels[:n_training_points]) #training the vqc
 elapsed = time.time() - start
 
-print(f"Training time: {round(elapsed)} seconds")
+print(f"Training time: {round(elapsed)} seconds\n")
 
 lqm.save_model(vqc, save_folder)
 lqm.score_model(vqc, train_features, test_features, train_labels, test_labels)

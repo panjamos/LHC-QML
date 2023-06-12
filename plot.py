@@ -2,10 +2,10 @@ import LHC_QML_module as lqm
 from sklearn.model_selection import train_test_split 
 from qiskit_machine_learning.algorithms.classifiers import VQC
 
-signals_datapath = "./data/signal/*.root:HZZ4LeptonsAnalysisReduced"
-backgrounds_datapath = "./data/background/*.root:HZZ4LeptonsAnalysisReduced"
+signals_folder = "./data/signal"
+backgrounds_folder = "./data/background"
 
-load_path = "./models/fit_result0"
+load_path = "./models/trained_vqc8"
 
 #choice_feature_keys = [
 # 'f_lept1_pt', 'f_lept1_eta', 'f_lept1_phi', 'f_lept1_pfx', 'f_lept2_pt',
@@ -22,10 +22,10 @@ training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
 num_features = len(training_feature_keys)
 
 #loads data from files
-signal, background = lqm.load_data(signals_datapath, backgrounds_datapath, training_feature_keys)
+signal_dict, background_dict, files_used = lqm.load_data(signals_folder, backgrounds_folder, training_feature_keys)
 
 #formats data for input into vqc
-features, labels = lqm.format_data(signal, background)
+features, labels = lqm.format_data(signal_dict, background_dict)
 
 #scales features to be between 0 and 1
 features, labels, scaler = lqm.preprocess_data(features, labels)
