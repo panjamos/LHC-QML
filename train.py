@@ -25,7 +25,7 @@ save_folder = "./models"
 # 'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
 seed = 123
-n_training_points = 50
+n_training_points = 10
 
 training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
 num_features = len(training_feature_keys)
@@ -81,7 +81,7 @@ elapsed = time.time() - start
 
 print(f"Training time: {round(elapsed)} seconds\n")
 
-lqm.save_model(vqc, save_folder)
+lqm.save_model(vqc, save_folder, seed=seed, n_training_points=n_training_points, training_feature_keys=training_feature_keys, files_used=files_used)
 lqm.score_model(vqc, train_features, test_features, train_labels, test_labels)
 
 lqm.plot_loss(losses)

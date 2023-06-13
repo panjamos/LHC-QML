@@ -18,7 +18,7 @@ def load_data(signal_path, background_path, keys, folder_paths=True):
         signal_filepaths = print_get_root_filepaths(signal_path)
         print("\nbackground data from:")
         background_filepaths = print_get_root_filepaths(background_path)
-        files_used = [signal_filepaths, background_filepaths]
+        files_used = [background_filepaths, signal_filepaths]
     else:
         if not isinstance(signal_path,list):
             signal_path = [signal_path]
@@ -32,7 +32,7 @@ def load_data(signal_path, background_path, keys, folder_paths=True):
         for path in signal_filepaths: print(path)
         print("\nbackground data from:")
         for path in background_filepaths: print(path)
-        files_used = [signal_filepaths, background_filepaths]
+        files_used = [background_filepaths, signal_filepaths]
 
     signal_datapaths = []
     background_datapaths = []
@@ -95,7 +95,7 @@ def preprocess_data(features, labels):
 
 
 
-def save_model(vqc: VQC, save_folder):
+def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='not specified', training_feature_keys='not specified', files_used='not specified'):
     #improve to also save file with vqc parameters, i.e. steps, points used, seed, split number, feature map, optimizer, ansatz, etc
     
     fit_number = 0
@@ -109,7 +109,26 @@ def save_model(vqc: VQC, save_folder):
             sys.exit("filepath likely incorrect") 
     
     vqc.save(fit_filepath)
-    print('\nfile saved to ' + fit_filepath)
+
+    info_file = open(fit_filepath + '.txt', 'a', encoding="utf-8")
+    info_file.write('feature map = \n' + str(vqc.feature_map) +
+                     '\nansatz = \n' + str(vqc.ansatz) +
+                     '\nloss function = ' + str(vqc.loss) +
+                     '\noptimizer = ' + str(vqc.optimizer) +
+                     '\nseed = ' + str(seed) +
+                     '\nnumber of training points = ' + str(n_training_points) +
+                     '\nfeatures used in training = ' + str(training_feature_keys))
+    
+    info_file.write('\n\nsignal files used\n')
+    for filepath in files_used[1]:
+        info_file.write(filepath)
+    info_file.write('\n\nbackground files used\n')
+    for filepath in files_used[0]:
+        info_file.write(filepath)
+    info_file.close()
+
+    print('\nvqc file saved to ' + fit_filepath)
+    print('\ninfo file saved to ' + fit_filepath + '.txt')
 
 
 
