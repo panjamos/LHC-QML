@@ -25,7 +25,7 @@ save_folder = "./models"
 # 'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
 seed = 123
-n_training_points = 10
+n_training_points = 100
 
 training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
 num_features = len(training_feature_keys)
@@ -33,7 +33,7 @@ num_features = len(training_feature_keys)
 feature_map = ZZFeatureMap(feature_dimension=num_features, reps=1)
 sampler = Sampler()
 ansatz = EfficientSU2(num_qubits=num_features, reps=3)
-optimizer = COBYLA(maxiter=10)
+optimizer = SLSQP(maxiter=35)
 
 
 

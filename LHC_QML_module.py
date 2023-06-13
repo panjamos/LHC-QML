@@ -115,16 +115,17 @@ def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='n
                      '\nansatz = \n' + str(vqc.ansatz) +
                      '\nloss function = ' + str(vqc.loss) +
                      '\noptimizer = ' + str(vqc.optimizer) +
+                     '\niterations = ' + str(vqc.optimizer.maxiter) +
                      '\nseed = ' + str(seed) +
                      '\nnumber of training points = ' + str(n_training_points) +
                      '\nfeatures used in training = ' + str(training_feature_keys))
     
     info_file.write('\n\nsignal files used\n')
     for filepath in files_used[1]:
-        info_file.write(filepath)
+        info_file.write(filepath + '\n')
     info_file.write('\n\nbackground files used\n')
     for filepath in files_used[0]:
-        info_file.write(filepath)
+        info_file.write(filepath + '\n')
     info_file.close()
 
     print('\nvqc file saved to ' + fit_filepath)

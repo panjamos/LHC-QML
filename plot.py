@@ -5,7 +5,7 @@ from qiskit_machine_learning.algorithms.classifiers import VQC
 signals_folder = "./data/signal"
 backgrounds_folder = "./data/background"
 
-load_path = "./models/trained_vqc8"
+load_path = "./models/trained_vqc"
 
 #choice_feature_keys = [
 # 'f_lept1_pt', 'f_lept1_eta', 'f_lept1_phi', 'f_lept1_pfx', 'f_lept2_pt',
@@ -45,7 +45,9 @@ vqc = VQC.load(load_path)
 lqm.score_model(vqc, train_features, test_features, train_labels, test_labels)
 
 prediction = vqc.predict(test_features)
+print('prediction finished')
 prob = vqc._neural_network.forward(test_features, vqc._fit_result.x)
+print('probabilities calculated')
 
 lqm.plot_discriminator(prediction, test_labels)
 lqm.plot_roc(prediction, test_labels)
