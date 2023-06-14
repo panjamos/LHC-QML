@@ -115,7 +115,7 @@ def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='n
                      '\nansatz = \n' + str(vqc.ansatz) +
                      '\nloss function = ' + str(vqc.loss) +
                      '\noptimizer = ' + str(vqc.optimizer) +
-                     '\niterations = ' + str(vqc.optimizer.maxiter) +
+                     '\niterations = ' + str(vqc.optimizer._options['maxiter']) +
                      '\nseed = ' + str(seed) +
                      '\nnumber of training points = ' + str(n_training_points) +
                      '\nfeatures used in training = ' + str(training_feature_keys))
