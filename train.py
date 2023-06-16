@@ -6,29 +6,38 @@ from qiskit.primitives import Sampler
 from qiskit_machine_learning.algorithms.classifiers import VQC
 from qiskit.circuit.library import RealAmplitudes, EfficientSU2
 from qiskit.algorithms.optimizers import COBYLA, SLSQP, SPSA
+from sklearn.decomposition import PCA
+from matplotlib import pyplot as plt
 
 from warnings import simplefilter
 # ignore all future warnings
 simplefilter(action='ignore', category=FutureWarning)
 
-signals_folder = "./data/signal"
-backgrounds_folder = "./data/background"
+signals_folder = "./data/signal/"
+backgrounds_folder = "./data/background/"
 save_folder = "./models"
+#you can either give path to folder containing data files to be used as above or give paths to files individually in array
+#i.e. signals_paths = ['./file1', './file2', './file3']
 
-#choice_feature_keys = [
-# 'f_lept1_pt', 'f_lept1_eta', 'f_lept1_phi', 'f_lept1_pfx', 'f_lept2_pt',
-# 'f_lept2_eta', 'f_lept2_phi', 'f_lept2_pfx', 'f_lept3_pt', 'f_lept3_eta',
-# 'f_lept3_phi', 'f_lept4_pt', 'f_lept4_eta', 'f_lept4_phi', 'f_Z1mass',
-# 'f_Z2mass', 'f_angle_costhetastar', 'f_angle_costheta1', 'f_angle_costheta2', 'f_angle_phi',
-# 'f_angle_phistar1', 'f_pt4l', 'f_eta4l', 'f_mass4l', 'f_deltajj',
-# 'f_massjj', 'f_jet1_pt', 'f_jet1_eta', 'f_jet1_phi', 'f_jet1_e',
-# 'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
+choice_feature_keys = [
+ 'f_lept1_pt', 'f_lept1_eta', 'f_lept1_phi', 'f_lept1_pfx', 'f_lept2_pt',
+ 'f_lept2_eta', 'f_lept2_phi', 'f_lept2_pfx', 'f_lept3_pt', 'f_lept3_eta',
+ 'f_lept3_phi', 'f_lept4_pt', 'f_lept4_eta', 'f_lept4_phi', 'f_Z1mass',
+ 'f_Z2mass', 'f_angle_costhetastar', 'f_angle_costheta1', 'f_angle_costheta2', 'f_angle_phi',
+ 'f_angle_phistar1', 'f_pt4l', 'f_eta4l', 'f_mass4l', 'f_deltajj',
+ 'f_massjj', 'f_jet1_pt', 'f_jet1_eta', 'f_jet1_phi', 'f_jet1_e',
+ 'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
+use_pca = False
 seed = 123
 n_training_points = 100
 
-training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
-num_features = len(training_feature_keys)
+if use_pca:
+    training_feature_keys = choice_feature_keys
+    num_features = 4 #number of pca components to use
+else:
+    training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
+    num_features = len(training_feature_keys)
 
 feature_map = ZZFeatureMap(feature_dimension=num_features, reps=1)
 sampler = Sampler()
@@ -43,16 +52,33 @@ signal_dict, background_dict, files_used = lqm.load_data(signals_folder, backgro
 #formats data for input into vqc
 features, labels = lqm.format_data(signal_dict, background_dict)
 
+
+if use_pca:
+# PCA Analysis
+# define how many pca components you would like. We could increase this to 6 qubits, which would encompass 55% of
+# the variance in our data, but currently I kept it at 4.
+    pca = PCA(n_components=num_features, random_state=seed)
+    features = pca.fit_transform(features)
+
 #scales features to be between 0 and 1
 features, labels, scaler = lqm.preprocess_data(features, labels)
 
+#this is clunky, might want to make this its own function or something
+#makes sure we use an equal amount of signal and background even if we have more signal than background
 n_signal_events = (labels == 1).sum()
+n_background_events = (labels ==0).sum()
+if n_signal_events <= n_background_events:
+    start = 0
+    stop = 2*n_signal_events
+else:
+    start = -2*n_background_events
+    stop = None
 
 #splits data into testing and training sets
 #data is first cut to inlcude equal number of signal and background events
 #TODO: maybe split signal and backgrounds seperately to ensure equal number of signal/background in each test/training set and then combine and randomize order
 train_features, test_features, train_labels, test_labels = train_test_split(
-    features[:2*n_signal_events,:], labels[:2*n_signal_events], train_size=0.8, random_state=seed)
+    features[start:stop,:], labels[start:stop], train_size=0.8, random_state=seed)
 
 
 losses = []
@@ -81,7 +107,13 @@ elapsed = time.time() - start
 
 print(f"Training time: {round(elapsed)} seconds\n")
 
-lqm.save_model(vqc, save_folder, seed=seed, n_training_points=n_training_points, training_feature_keys=training_feature_keys, files_used=files_used)
-lqm.score_model(vqc, train_features, test_features, train_labels, test_labels)
+scores = lqm.score_model(vqc, train_features, test_features, train_labels, test_labels)
+lqm.save_model(vqc, save_folder, seed=seed, n_training_points=n_training_points, 
+               training_feature_keys=training_feature_keys, files_used=files_used, scores=scores, use_pca=use_pca)
 
 lqm.plot_loss(losses)
+prob = vqc._neural_network.forward(test_features, vqc._fit_result.x)
+
+lqm.plot_discriminator(prob[:,1], test_labels)
+
+plt.show()

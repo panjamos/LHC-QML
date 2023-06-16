@@ -95,8 +95,8 @@ def preprocess_data(features, labels):
 
 
 
-def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='not specified', training_feature_keys='not specified', files_used='not specified'):
-    #improve to also save file with vqc parameters, i.e. steps, points used, seed, split number, feature map, optimizer, ansatz, etc
+def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='not specified', training_feature_keys='not specified', files_used=None, scores='not specified', use_pca='not specified'):
+    #rewrite with input as dictionary of things to save and loop over instead of this mess
     
     fit_number = 0
     fit_filepath_default = save_folder + "/trained_vqc"
@@ -116,9 +116,12 @@ def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='n
                      '\nloss function = ' + str(vqc.loss) +
                      '\noptimizer = ' + str(vqc.optimizer) +
                      '\niterations = ' + str(vqc.optimizer._options['maxiter']) +
+                     '\nuse_pca = ' + str(use_pca) +
                      '\nseed = ' + str(seed) +
                      '\nnumber of training points = ' + str(n_training_points) +
-                     '\nfeatures used in training = ' + str(training_feature_keys))
+                     '\nfeatures used in training = ' + str(training_feature_keys) +
+                     '\ntraining score = ' + str(scores[0]) + 
+                     '\ntest score = ' + str(scores[1]))
     
     info_file.write('\n\nsignal files used\n')
     for filepath in files_used[1]:
@@ -138,8 +141,10 @@ def score_model(vqc: VQC, train_features, test_features, train_labels, test_labe
     test_score_loaded = vqc.score(test_features[:500,:], test_labels[:500])
 
     print("Warning: only scoring on 500 pts")
-    print(f"Quantum VQC on the training dataset: {train_score_loaded:.5f}")
-    print(f"Quantum VQC on the test dataset:     {test_score_loaded:.5f}")
+    print(f"VQC score on the training dataset: {train_score_loaded:.5f}")
+    print(f"VQC score on the test dataset:     {test_score_loaded:.5f}")
+
+    return [train_score_loaded, test_score_loaded]
 
 
 
@@ -158,19 +163,20 @@ def plot_pairwise(signal, background):
     plot = sns.pairplot(df, hue="Event Type", corner=True, palette = {'signal' : 'r', 'background' : 'b'},
                         markers=["X", "."], diag_kws = dict(common_norm=False), plot_kws = dict(linewidth=0.2,alpha=0.75))
     plot.fig.suptitle("Feature Comparison Plots")
-    plt.show()
+    fig = plt.gcf()
+    fig.set_size_inches(6, 6)
 
 def plot_loss(losses):
+    plt.figure()
     plt.title("Loss During training")
     plt.xlabel("Iteration")
     plt.ylabel("Loss")
     plt.plot(range(1,len(losses)+1), losses)
-    plt.show()
 
 def plot_discriminator(prediction, target):
+    plt.figure()
     labels = ['Background', 'Signal']
     colors = ['b', 'r']
-    plt.figure(1) 
     #I split up signal and background using masks instead of loops
     #masking test values where prediction is indicated signal/background
     signal = np.bool_(target.flat)
@@ -182,14 +188,13 @@ def plot_discriminator(prediction, target):
     plt.legend()
     plt.xlabel("Output Value")
     plt.legend()
-    plt.show()
 
 def plot_roc(prediction, labels):
+    plt.figure()
     fpr, tpr, _ = roc_curve(labels, prediction)
 
     auc_roc = auc(fpr, tpr)
 
-    plt.figure(2,figsize=(6,6))
     plt.plot(tpr, 1.0-fpr, lw=3, alpha=0.8,
             label="(AUC={:.3f})".format(auc_roc))
     plt.xlabel("Signal efficiency")
@@ -197,8 +202,6 @@ def plot_roc(prediction, labels):
     plt.legend(loc=3)
     plt.xlim((0.0, 1.0))
     plt.ylim((0.0, 1.0))
-    plt.show()
-    plt.close()
 
 def print_get_root_filepaths(directory_path):
     directory = os.fsencode(directory_path)
