@@ -36,16 +36,6 @@ signal_dict, background_dict, files_used = lqm.load_data(signals_folder, backgro
 #formats data for input into vqc
 features, labels = lqm.format_data(signal_dict, background_dict)
 
-if use_pca:
-# PCA Analysis
-# define how many pca components you would like. We could increase this to 6 qubits, which would encompass 55% of
-# the variance in our data, but currently I kept it at 4.
-    pca = PCA(n_components=num_features, random_state=seed)
-    features = pca.fit_transform(features)
-
-#scales features to be between 0 and 1
-features, labels, scaler = lqm.preprocess_data(features, labels)
-
 #this is clunky, might want to make this its own function or something
 #makes sure we use an equal amount of signal and background even if we have more signal than background
 n_signal_events = (labels == 1).sum()
@@ -63,8 +53,11 @@ else:
 train_features, test_features, train_labels, test_labels = train_test_split(
     features[start:stop,:], labels[start:stop], train_size=0.8, random_state=seed)
 
+train_features, test_features = lqm.preprocess_data(train_features, test_features, use_pca, num_features, seed)
 
-#lqm.plot_pairwise(signal, background)
+
+#lqm.plot_pairwise_dicts(signal, background)
+#lqm.plot_pairwise(train_features, labels)
 
 vqc = VQC.load(load_path)
 lqm.score_model(vqc, train_features, test_features, train_labels, test_labels)

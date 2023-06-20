@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.metrics import roc_curve, auc
+from sklearn.decomposition import PCA
 
 
 def load_data(signal_path, background_path, keys, folder_paths=True):
@@ -83,19 +84,41 @@ def format_data(signal, background):
 
 
 
-def preprocess_data(features, labels):
-    #currently the only preprocessing is scaling each feature independently to be between 0 and 1
+def preprocess_data(train_features, test_features, use_pca=False, num_features=4, seed=123):
+    #does all preprocessing
+    #if pca then std scaler into pca transform into overall minmax
+    #if no pca then just overall minmax
+    if use_pca:
+    # PCA Analysis
+    # define how many pca components you would like. We could increase this to 6 qubits, which would encompass 55% of
+    # the variance in our data, but currently I kept it at 4.
+        std_scaler = sklearn.preprocessing.StandardScaler()
+        train_features = std_scaler.fit_transform(train_features)
+        test_features = std_scaler.transform(test_features)
 
-    scaler = sklearn.preprocessing.MinMaxScaler()
-    scaled_features = scaler.fit_transform(features)
+        pca = PCA(n_components=num_features, random_state=seed)
+        train_features = pca.fit_transform(train_features)
+        test_features = pca.transform(test_features)
 
-    #return scaler object for unscaling later if necessary
+    train_features, minmax_scaler = minmax(train_features)
+    test_features = minmax_scaler(test_features)
     print('data preprocessed\n')
-    return scaled_features, labels, scaler
+    return train_features, test_features
+
+def minmax(features):
+    #transforms all features together instead of independently
+    maximum = np.amax(features)
+    minimum = np.amin(features)
+    scaled_features = (features - minimum)/(maximum-minimum)
+    def scaler(features, minimum=minimum,maximum=maximum):
+        scaled_features = (features - minimum)/(maximum-minimum)
+        return scaled_features
+
+    return scaled_features, scaler
 
 
 
-def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='not specified', training_feature_keys='not specified', files_used=None, scores='not specified', use_pca='not specified'):
+def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='not specified', training_feature_keys='not specified', files_used=['',''], scores=['',''], use_pca='not specified'):
     #rewrite with input as dictionary of things to save and loop over instead of this mess
     
     fit_number = 0
@@ -148,7 +171,7 @@ def score_model(vqc: VQC, train_features, test_features, train_labels, test_labe
 
 
 
-def plot_pairwise(signal, background):
+def plot_pairwise_dicts(signal, background):
     #expects data in dicts with keys being the features and value being 1d array of data for events
     feature_dict = {}
     for key in signal.keys():
@@ -164,7 +187,28 @@ def plot_pairwise(signal, background):
                         markers=["X", "."], diag_kws = dict(common_norm=False), plot_kws = dict(linewidth=0.2,alpha=0.75))
     plot.fig.suptitle("Feature Comparison Plots")
     fig = plt.gcf()
-    fig.set_size_inches(6, 6)
+    fig.set_size_inches(10, 10)
+
+def plot_pairwise(features, labels):
+    #expects data as input into vqc
+    features_df = pd.DataFrame(features)
+
+    event_labels = []
+    for label in labels:
+        if label:
+            event_labels.append('signal')
+        else:
+            event_labels.append('background')
+
+
+    features_df["Event Type"] = pd.Series(event_labels)
+
+    plot = sns.pairplot(features_df, hue="Event Type", corner=True, palette = {'signal' : 'r', 'background' : 'b'},
+                        markers=["X", "."], diag_kws = dict(common_norm=False), plot_kws = dict(linewidth=0.2,alpha=0.75))
+    plot.fig.suptitle("Feature Comparison Plots")
+    fig = plt.gcf()
+    fig.set_size_inches(10, 10)
+
 
 def plot_loss(losses):
     plt.figure()
