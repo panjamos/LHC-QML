@@ -6,6 +6,7 @@ from qiskit.primitives import Sampler
 from qiskit_machine_learning.algorithms.classifiers import VQC
 from qiskit.circuit.library import RealAmplitudes, EfficientSU2
 from qiskit.algorithms.optimizers import COBYLA, SLSQP, SPSA
+from qiskit.utils.algorithm_globals import algorithm_globals
 from matplotlib import pyplot as plt
 
 from warnings import simplefilter
@@ -27,8 +28,9 @@ choice_feature_keys = [
  'f_massjj', 'f_jet1_pt', 'f_jet1_eta', 'f_jet1_phi', 'f_jet1_e',
  'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
-use_pca = True
+use_pca = False
 seed = 123
+algorithm_globals._random_seed = seed
 n_training_points = 100
 
 if use_pca:

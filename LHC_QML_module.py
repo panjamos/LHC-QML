@@ -102,6 +102,10 @@ def preprocess_data(train_features, test_features, use_pca=False, num_features=4
 
     train_features, minmax_scaler = minmax(train_features)
     test_features = minmax_scaler(test_features)
+    # mm_scaler = sklearn.preprocessing.MinMaxScaler()
+    # train_features = mm_scaler.fit_transform(train_features)
+    # test_features = mm_scaler.transform(test_features)
+
     print('data preprocessed\n')
     return train_features, test_features
 
