@@ -28,22 +28,25 @@ choice_feature_keys = [
  'f_massjj', 'f_jet1_pt', 'f_jet1_eta', 'f_jet1_phi', 'f_jet1_e',
  'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
-use_pca = False
+use_pca = True
 seed = 123
 algorithm_globals._random_seed = seed
-n_training_points = 100
+n_training_points = 200
 
 if use_pca:
-    training_feature_keys = choice_feature_keys
-    num_features = 4 #number of pca components to use
+    # training_feature_keys = choice_feature_keys
+    training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_Z1mass', 'f_angle_costheta2', 'f_pt4l', 'f_eta4l', 'f_jet1_pt', 'f_jet1_e']
+    num_features = 6 #number of pca components to use
 else:
-    training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
+    # training_feature_keys = ['f_lept3_pt', 'f_Z1mass', 'f_pt4l', 'f_eta4l', 'f_massjj']
+    training_feature_keys = ['f_pt4l', 'f_massjj', 'f_jet2_pt', 'f_jet2_e']
+    #training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
     num_features = len(training_feature_keys)
 
 feature_map = ZZFeatureMap(feature_dimension=num_features, reps=1)
-sampler = Sampler(options={"seed" : seed})
 ansatz = EfficientSU2(num_qubits=num_features, reps=3)
-optimizer = SLSQP(maxiter=35)
+optimizer = COBYLA(maxiter=400)
+sampler = Sampler()
 
 
 #loads data from files
@@ -89,6 +92,8 @@ vqc = VQC(
     optimizer=optimizer,
     callback=callback
 )
+# vqc = VQC.load('./models/trained_vqc33')
+# vqc.warm_start = True
 
 start = time.time()
 times.append(start)
@@ -98,12 +103,12 @@ elapsed = time.time() - start
 print(f"Training time: {round(elapsed)} seconds\n")
 
 scores = lqm.score_model(vqc, train_features, test_features, train_labels, test_labels)
-lqm.save_model(vqc, save_folder, seed=seed, n_training_points=n_training_points, 
+fit_filepath = lqm.save_model(vqc, save_folder, seed=seed, n_training_points=n_training_points, 
                training_feature_keys=training_feature_keys, files_used=files_used, scores=scores, use_pca=use_pca)
 
 lqm.plot_loss(losses)
+plt.savefig(fit_filepath + '_loss.png')
 
 prob = vqc._neural_network.forward(test_features, vqc._fit_result.x)
 lqm.plot_discriminator(prob[:,1], test_labels)
-
-plt.show()
+plt.savefig(fit_filepath + '_dis.png')

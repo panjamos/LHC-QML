@@ -99,12 +99,15 @@ def preprocess_data(train_features, test_features, use_pca=False, num_features=4
         pca = PCA(n_components=num_features, random_state=seed)
         train_features = pca.fit_transform(train_features)
         test_features = pca.transform(test_features)
-
-    train_features, minmax_scaler = minmax(train_features)
-    test_features = minmax_scaler(test_features)
-    # mm_scaler = sklearn.preprocessing.MinMaxScaler()
-    # train_features = mm_scaler.fit_transform(train_features)
-    # test_features = mm_scaler.transform(test_features)
+        
+        train_features, minmax_scaler = minmax(train_features)
+        test_features = minmax_scaler(test_features)
+    else:
+        mm_scaler = sklearn.preprocessing.MinMaxScaler()
+        train_features = mm_scaler.fit_transform(train_features)
+        test_features = mm_scaler.transform(test_features)
+    # train_features[:,0] = 0*train_features[:,0]
+    # test_features[:,0] = 0*test_features[:,0]
 
     print('data preprocessed\n')
     return train_features, test_features
@@ -160,14 +163,15 @@ def save_model(vqc: VQC, save_folder, seed='not specified', n_training_points='n
 
     print('\nvqc file saved to ' + fit_filepath)
     print('\ninfo file saved to ' + fit_filepath + '.txt')
+    return fit_filepath
 
 
 
 def score_model(vqc: VQC, train_features, test_features, train_labels, test_labels):
-    train_score_loaded = vqc.score(train_features[:500,:], train_labels[:500])
-    test_score_loaded = vqc.score(test_features[:500,:], test_labels[:500])
+    train_score_loaded = vqc.score(train_features[:,:], train_labels[:])
+    test_score_loaded = vqc.score(test_features[:,:], test_labels[:])
 
-    print("Warning: only scoring on 500 pts")
+    # print("Warning: only scoring on 500 pts")
     print(f"VQC score on the training dataset: {train_score_loaded:.5f}")
     print(f"VQC score on the test dataset:     {test_score_loaded:.5f}")
 
@@ -211,7 +215,7 @@ def plot_pairwise(features, labels):
                         markers=["X", "."], diag_kws = dict(common_norm=False), plot_kws = dict(linewidth=0.2,alpha=0.75))
     plot.fig.suptitle("Feature Comparison Plots")
     fig = plt.gcf()
-    fig.set_size_inches(10, 10)
+    #fig.set_size_inches(10, 10)
 
 
 def plot_loss(losses):
@@ -229,8 +233,8 @@ def plot_discriminator(prediction, target):
     #masking test values where prediction is indicated signal/background
     signal = np.bool_(target.flat)
 
-    n, bins, patches = plt.hist(prediction[signal],50, histtype='step', color=colors[1], label=labels[1])#,density=True) 
-    n, bins, patches = plt.hist(prediction[~signal],50, histtype='step', color=colors[0], label=labels[0])#,density=True) 
+    n, bins, patches = plt.hist(prediction[signal],50, range=(0,1),histtype='step', color=colors[1], label=labels[1])#,density=True) 
+    n, bins, patches = plt.hist(prediction[~signal],50, range=(0,1),histtype='step', color=colors[0], label=labels[0])#,density=True) 
     plt.title('Discriminator')
     plt.ylabel("Counts")
     plt.legend()
