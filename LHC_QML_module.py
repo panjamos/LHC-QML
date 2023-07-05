@@ -225,7 +225,7 @@ def plot_loss(losses):
     plt.ylabel("Loss")
     plt.plot(range(1,len(losses)+1), losses)
 
-def plot_discriminator(prediction, target):
+def plot_class_hist(prediction, target):
     plt.figure()
     labels = ['Background', 'Signal']
     colors = ['b', 'r']
@@ -235,7 +235,7 @@ def plot_discriminator(prediction, target):
 
     n, bins, patches = plt.hist(prediction[signal],50, range=(0,1),histtype='step', color=colors[1], label=labels[1])#,density=True) 
     n, bins, patches = plt.hist(prediction[~signal],50, range=(0,1),histtype='step', color=colors[0], label=labels[0])#,density=True) 
-    plt.title('Discriminator')
+    plt.title('Classification Histogram')
     plt.ylabel("Counts")
     plt.legend()
     plt.xlabel("Output Value")

@@ -66,9 +66,9 @@ lqm.score_model(vqc, train_features, test_features, train_labels, test_labels)
 #print('prediction finished')
 prob = vqc._neural_network.forward(test_features, vqc._fit_result.x)
 
-#lqm.plot_discriminator(prediction, test_labels)
+#lqm.plot_class_hist(prediction, test_labels)
 #lqm.plot_roc(prediction, test_labels)
 
-lqm.plot_discriminator(prob[:,1], test_labels)
+lqm.plot_class_hist(prob[:,1], test_labels)
 lqm.plot_roc(prob[:,1], test_labels)
 plt.show()

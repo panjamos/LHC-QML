@@ -35,17 +35,18 @@ n_training_points = 200
 
 if use_pca:
     # training_feature_keys = choice_feature_keys
-    training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_Z1mass', 'f_angle_costheta2', 'f_pt4l', 'f_eta4l', 'f_jet1_pt', 'f_jet1_e']
-    num_features = 6 #number of pca components to use
+    # training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_Z1mass', 'f_angle_costheta2', 'f_pt4l', 'f_eta4l', 'f_jet1_pt', 'f_jet1_e']
+    training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_pt4l', 'f_angle_costheta2', 'f_jet1_pt', 'f_jet2_pt', 'f_Z1mass', 'f_eta4l']
+    num_features = 4 #number of pca components to use
 else:
     # training_feature_keys = ['f_lept3_pt', 'f_Z1mass', 'f_pt4l', 'f_eta4l', 'f_massjj']
-    training_feature_keys = ['f_pt4l', 'f_massjj', 'f_jet2_pt', 'f_jet2_e']
+    training_feature_keys = ['f_jet1_pt', 'f_pt4l', 'f_lept3_pt', 'f_massjj']
     #training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
     num_features = len(training_feature_keys)
 
 feature_map = ZZFeatureMap(feature_dimension=num_features, reps=1)
 ansatz = EfficientSU2(num_qubits=num_features, reps=3)
-optimizer = COBYLA(maxiter=400)
+optimizer = SLSQP(maxiter=50)
 sampler = Sampler()
 
 
@@ -92,8 +93,9 @@ vqc = VQC(
     optimizer=optimizer,
     callback=callback
 )
-# vqc = VQC.load('./models/trained_vqc33')
+# vqc = VQC.load('./models/trained_vqc53')
 # vqc.warm_start = True
+# vqc.optimizer = SLSQP(maxiter=15)
 
 start = time.time()
 times.append(start)
@@ -110,5 +112,5 @@ lqm.plot_loss(losses)
 plt.savefig(fit_filepath + '_loss.png')
 
 prob = vqc._neural_network.forward(test_features, vqc._fit_result.x)
-lqm.plot_discriminator(prob[:,1], test_labels)
+lqm.plot_class_hist(prob[:,1], test_labels)
 plt.savefig(fit_filepath + '_dis.png')
