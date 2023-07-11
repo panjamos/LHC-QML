@@ -8,6 +8,7 @@ dependencies:
   - scikit-learn=1.2
   - seaborn=0.12
   - uproot=5.0
+  - pylatexenc=2.10
   - pip:
       - numpy==1.23.5
       - dill==0.3.6
