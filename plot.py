@@ -4,10 +4,10 @@ from qiskit_machine_learning.algorithms.classifiers import VQC
 from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
 
-signals_folder = "./data/signal/storage/old"
-backgrounds_folder = "./data/background/storage/old"
+signals_folder = "./data/signal/4e"
+backgrounds_folder = "./data/background/4e"
 
-load_path = "./models/trained_vqc27"
+load_path = "./models/trained_vqc8"
 #you can either give path to folder containing data files to be used as above or give paths to files individually in array
 #i.e. signals_paths = ['./file1', './file2', './file3']
 
@@ -20,14 +20,14 @@ choice_feature_keys = [
  'f_massjj', 'f_jet1_pt', 'f_jet1_eta', 'f_jet1_phi', 'f_jet1_e',
  'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
-use_pca = True
+use_pca = False
 seed = 123
 
 if use_pca:
     training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_Z1mass', 'f_angle_costheta2', 'f_pt4l', 'f_eta4l', 'f_jet1_pt', 'f_jet1_e']
     num_features = 4
 else:
-    training_feature_keys = ['f_lept3_pt', 'f_Z1mass', 'f_pt4l', 'f_eta4l', 'f_jet1_pt', 'f_massjj']
+    training_feature_keys = ['f_lept1_pt', 'f_lept3_pt', 'f_lept4_pt', 'f_Z1mass']
     num_features = len(training_feature_keys)
 
 #loads data from files

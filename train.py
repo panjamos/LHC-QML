@@ -13,8 +13,8 @@ from warnings import simplefilter
 # ignore all future warnings
 simplefilter(action='ignore', category=FutureWarning)
 
-signals_folder = "./data/signal/storage/old"
-backgrounds_folder = "./data/background/storage/old"
+signals_folder = "./data/signal/4e"
+backgrounds_folder = "./data/background/4e"
 save_folder = "./models"
 #you can either give path to folder containing data files to be used as above or give paths to files individually in array
 #i.e. signals_paths = ['./file1', './file2', './file3']
@@ -28,25 +28,25 @@ choice_feature_keys = [
  'f_massjj', 'f_jet1_pt', 'f_jet1_eta', 'f_jet1_phi', 'f_jet1_e',
  'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
-use_pca = True
+use_pca = False
 seed = 123
 algorithm_globals._random_seed = seed
-n_training_points = 200
+n_training_points = 500
 
 if use_pca:
     # training_feature_keys = choice_feature_keys
-    # training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_Z1mass', 'f_angle_costheta2', 'f_pt4l', 'f_eta4l', 'f_jet1_pt', 'f_jet1_e']
-    training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_pt4l', 'f_angle_costheta2', 'f_jet1_pt', 'f_jet2_pt', 'f_Z1mass', 'f_eta4l']
+    training_feature_keys = ['f_lept1_pt', 'f_lept3_pt', 'f_lept4_pt', 'f_Z1mass', 'f_angle_costheta2', 'f_pt4l', 'f_eta4l', 'f_jet1_pt']
+    # training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_pt4l', 'f_angle_costheta2', 'f_jet1_pt', 'f_jet2_pt', 'f_Z1mass', 'f_eta4l']
     num_features = 4 #number of pca components to use
 else:
-    # training_feature_keys = ['f_lept3_pt', 'f_Z1mass', 'f_pt4l', 'f_eta4l', 'f_massjj']
-    training_feature_keys = ['f_jet1_pt', 'f_pt4l', 'f_lept3_pt', 'f_massjj']
+    training_feature_keys = ['f_lept1_pt', 'f_lept3_pt', 'f_Z1mass', 'f_lept4_pt']
+    # training_feature_keys = ['f_jet1_pt', 'f_pt4l', 'f_lept3_pt', 'f_massjj']
     #training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
     num_features = len(training_feature_keys)
 
 feature_map = ZZFeatureMap(feature_dimension=num_features, reps=1)
 ansatz = EfficientSU2(num_qubits=num_features, reps=3)
-optimizer = SLSQP(maxiter=50)
+optimizer = COBYLA(maxiter=1200)
 sampler = Sampler()
 
 
@@ -93,7 +93,7 @@ vqc = VQC(
     optimizer=optimizer,
     callback=callback
 )
-# vqc = VQC.load('./models/trained_vqc53')
+# vqc = VQC.load('./models/trained_vqc54')
 # vqc.warm_start = True
 # vqc.optimizer = SLSQP(maxiter=15)
 

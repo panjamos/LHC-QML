@@ -197,9 +197,19 @@ def plot_pairwise_dicts(signal, background):
     fig = plt.gcf()
     fig.set_size_inches(10, 10)
 
-def plot_pairwise(features, labels):
+def plot_pairwise(features, labels, feature_keys=None):
+    if not feature_keys:
+        feature_num = range(len(features[0,:]))
+        feature_keys = feature_num
+
     #expects data as input into vqc
-    features_df = pd.DataFrame(features)
+    feature_dict = {}
+    i = 0
+    for key in feature_keys:
+        feature_dict[key] = features[:,i]
+        i += 1
+
+    features_df = pd.DataFrame(feature_dict)
 
     event_labels = []
     for label in labels:
@@ -212,7 +222,8 @@ def plot_pairwise(features, labels):
     features_df["Event Type"] = pd.Series(event_labels)
 
     plot = sns.pairplot(features_df, hue="Event Type", corner=True, palette = {'signal' : 'r', 'background' : 'b'},
-                        markers=["X", "."], diag_kws = dict(common_norm=False), plot_kws = dict(linewidth=0.2,alpha=0.75))
+                        markers=["X", "."], diag_kws = dict(common_norm=False), plot_kws = dict(linewidth=0.2,alpha=0.75),
+                        height=2.5, aspect=1)
     plot.fig.suptitle("Feature Comparison Plots")
     fig = plt.gcf()
     #fig.set_size_inches(10, 10)
@@ -247,10 +258,10 @@ def plot_roc(prediction, labels):
 
     auc_roc = auc(fpr, tpr)
 
-    plt.plot(tpr, 1.0-fpr, lw=3, alpha=0.8,
+    plt.plot(fpr, tpr, lw=3, alpha=0.8,
             label="(AUC={:.3f})".format(auc_roc))
-    plt.xlabel("Signal efficiency")
-    plt.ylabel("Background rejection")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
     plt.legend(loc=3)
     plt.xlim((0.0, 1.0))
     plt.ylim((0.0, 1.0))
