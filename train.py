@@ -8,6 +8,8 @@ from qiskit.circuit.library import RealAmplitudes, EfficientSU2
 from qiskit.algorithms.optimizers import COBYLA, SLSQP, SPSA
 from qiskit.utils.algorithm_globals import algorithm_globals
 from matplotlib import pyplot as plt
+from qiskit.primitives import BackendSampler
+from qiskit_ionq import IonQProvider
 
 from warnings import simplefilter
 # ignore all future warnings
@@ -29,13 +31,13 @@ choice_feature_keys = [
  'f_jet2_pt', 'f_jet2_eta', 'f_jet2_phi', 'f_jet2_e']
 
 use_pca = False
-seed = 123
+seed = 42
 algorithm_globals._random_seed = seed
-n_training_points = 500
+n_training_points = 400
 
 if use_pca:
     # training_feature_keys = choice_feature_keys
-    training_feature_keys = ['f_lept1_pt', 'f_lept3_pt', 'f_lept4_pt', 'f_Z1mass', 'f_angle_costheta2', 'f_pt4l', 'f_eta4l', 'f_jet1_pt']
+    training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_pt4l', 'f_angle_costheta2', 'f_jet1_pt', 'f_jet2_pt', 'f_Z1mass', 'f_eta4l']
     # training_feature_keys = ['f_lept3_pt', 'f_lept4_pt', 'f_pt4l', 'f_angle_costheta2', 'f_jet1_pt', 'f_jet2_pt', 'f_Z1mass', 'f_eta4l']
     num_features = 4 #number of pca components to use
 else:
@@ -44,10 +46,21 @@ else:
     #training_feature_keys = ['f_Z2mass','f_pt4l', 'f_eta4l', 'f_mass4l']
     num_features = len(training_feature_keys)
 
-feature_map = ZZFeatureMap(feature_dimension=num_features, reps=1)
-ansatz = EfficientSU2(num_qubits=num_features, reps=3)
-optimizer = COBYLA(maxiter=1200)
+#flattening these circuits makes the training faster, but to do so you need to modify their
+#implementation (in the qiskit code) to inherit the flatten input parameter from its base class
+feature_map = ZZFeatureMap(feature_dimension=num_features, reps=1)#, flatten=True)
+ansatz = EfficientSU2(num_qubits=num_features, reps=3)#, flatten=True)
+optimizer = SLSQP(maxiter=35)
+
+#NOTE: do not make code publicly available with this key in it
+provider = IonQProvider("placeholder")
+backend_ionq_sim = provider.get_backend("ionq_simulator")
+backend_ionq_qpu = provider.get_backend("ionq_qpu")
+
+backend = backend_ionq_sim
+
 sampler = Sampler()
+# sampler = BackendSampler(backend, options={"shots":1024})
 
 
 #loads data from files
@@ -93,7 +106,7 @@ vqc = VQC(
     optimizer=optimizer,
     callback=callback
 )
-# vqc = VQC.load('./models/trained_vqc54')
+# vqc = VQC.load('./models/trained_vqc')
 # vqc.warm_start = True
 # vqc.optimizer = SLSQP(maxiter=15)
 
